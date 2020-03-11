@@ -10,41 +10,61 @@ var app = http.createServer(function(request, response) {
 
 	if (pathName === '/') {
 		if (queryData.id === undefined) {
-			fs.readFile(`data/${title}`, 'utf8', function(err, description) {
+			fs.readdir('./data', function(error, filelist) {
 				title = 'Welcome!';
 				description = 'Hello Node js!';
+				var list = '<ul>';
+
+				var i = 0;
+				while (i < filelist.length) {
+					list =
+						list +
+						`<li><a href="/?id=${filelist[i]}">${filelist[
+							i
+						]}</a></li>`;
+					i = i + 1;
+				}
+				list = list + '</ul>';
 				var tmeplate = `<!doctype html>
-			<html>
-			<head>
-				<title>WEB1 - ${title}</title>
-				<meta charset="utf-8">
-				<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
-			</head>
-			
-			<body>
-				<h1><a href="/">WEB</a></h1>
-				<input id="night_day" type="button" value="night" onclick="
-				nightDayHandler(this);
-			  ">
-				<ul>
-					<li><a href="/?id=HTML">HTML</a></li>
-					<li><a href="/?id=CSS">CSS</a></li>
-					<li><a href="/?id=JavaScript">JavaScript</a></li>
-				</ul>
-				<h2>${title}</h2>
-				<p> 
-					${description}
-				</p>			
-			</body>
-			
-			</html>`;
+				<html>
+				<head>
+					<title>WEB1 - ${title}</title>
+					<meta charset="utf-8">
+					<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+				</head>
+				
+				<body>
+					<h1><a href="/">WEB</a></h1>
+					${list}
+					<h2>${title}</h2>
+					<p> 
+						${description}
+					</p>			
+				</body>
+				
+				</html>`;
 				response.writeHead(200);
-				console.log(pathName);
 				response.end(tmeplate);
 			});
 		} else {
-			fs.readFile(`data/${title}`, 'utf8', function(err, description) {
-				var tmeplate = `<!doctype html>
+			fs.readdir('./data', function(error, filelist) {
+				var list = '<ul>';
+				var i = 0;
+				while (i < filelist.length) {
+					list =
+						list +
+						`<li><a href="/?id=${filelist[i]}">${filelist[
+							i
+						]}</a></li>`;
+					i = i + 1;
+				}
+				list = list + '</ul>';
+
+				fs.readFile(`data/${title}`, 'utf8', function(
+					err,
+					description
+				) {
+					var tmeplate = `<!doctype html>
 		<html>
 		<head>
 			<title>WEB1 - ${title}</title>
@@ -57,11 +77,7 @@ var app = http.createServer(function(request, response) {
 			<input id="night_day" type="button" value="night" onclick="
 			nightDayHandler(this);
 		  ">
-			<ul>
-				<li><a href="/?id=HTML">HTML</a></li>
-				<li><a href="/?id=CSS">CSS</a></li>
-				<li><a href="/?id=JavaScript">JavaScript</a></li>
-			</ul>
+			${list}
 			<h2>${title}</h2>
 			<p> 
 				${description}
@@ -69,9 +85,9 @@ var app = http.createServer(function(request, response) {
 		</body>
 		
 		</html>`;
-				response.writeHead(200);
-				console.log(pathName);
-				response.end(tmeplate);
+					response.writeHead(200);
+					response.end(tmeplate);
+				});
 			});
 		}
 	} else {
