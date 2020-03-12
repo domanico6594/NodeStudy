@@ -1,8 +1,9 @@
 var http = require('http');
 var fs = require('fs');
 var url = require('url');
+var qs = require('querystring');
 
-function templateHTML(title, list, body) {
+function templateHTML(title, list, body, control) {
 	return `<!doctype html>
 		<html>
 		<head>
@@ -14,6 +15,7 @@ function templateHTML(title, list, body) {
 		<body>
 			<h1><a href="/">WEB2</a></h1>
 			${list}
+			${control}
 			${body}		
 		</body>
 		
@@ -52,7 +54,7 @@ var app = http.createServer(function (request, response) {
 					`<h2>${title}</h2>
 				<p> 
 				${description}
-				</p>`
+				</p>`, `<a href="/create">Create</a>`
 				);
 				response.writeHead(200);
 				response.end(template);
@@ -68,13 +70,101 @@ var app = http.createServer(function (request, response) {
 						title, list, `<h2>${title}</h2>
 						<p> 
 						${description}
-						</p>`
+						</p>`, `<a href="/create">Create</a> <a href="/update?id=${title}">Update</a>`
 					);
 					response.writeHead(200);
 					response.end(template);
 				});
 			});
 		}
+	} else if (pathName === '/create') {
+		fs.readdir('./data', function (error, filelist) {
+			title = 'Welcome!';
+			description = 'Hello Node js!';
+			var list = templateList(filelist);
+			var template = templateHTML(
+				title,
+				list,
+				`<form action="/create_process" method="POST">
+
+				<p><input type="text" name="title" placeholder="Title"></p>
+				<p>
+					<textarea name="description" placeholder="Description"></textarea>
+				</p>
+				<p>
+					<input type="submit">
+				</p>
+			
+			</form>`, ``
+			);
+			response.writeHead(200);
+			response.end(template);
+		});
+	} else if (pathName === '/create_process') {
+		var body = '';
+		request.on('data', (data) => {
+			body = body + data;
+		})
+		request.on('end', () => {
+			var post = qs.parse(body);
+			var title = post.title;
+			var description = post.description;
+			fs.writeFile(`Data/${title}`, description, 'utf8', (err) => {
+				response.writeHead(302, {
+					Location: `/?id=${title}`
+				});
+				response.end();
+			});
+		});
+	} else if (pathName === '/update') {
+		fs.readdir('./data', function (error, filelist) {
+			var list = templateList(filelist);
+			fs.readFile(`data/${title}`, 'utf8', function (
+				err,
+				description
+			) {
+				var template = templateHTML(
+					title, list, `<h2>${title}</h2>
+					<p> 
+					<form action="/update_process" method="POST">
+					<input type="hidden" name="id" value="${title}">
+				<p><input type="text" name="title" placeholder="Title" value="${title}"></p>
+				<p>
+					<textarea name="description" placeholder="Description" >${description}</textarea>
+				</p>
+				<p>
+					<input type="submit">
+				</p>
+			
+			</form>
+					</p>`, `<a href="/create">Create</a> <a href="/update?id=${title}">Update</a>`
+				);
+				response.writeHead(200);
+				response.end(template);
+			});
+		});
+	} else if (pathName === '/update_process') {
+		var body = '';
+		request.on('data', (data) => {
+			body = body + data;
+		})
+		request.on('end', () => {
+			var post = qs.parse(body);
+			let id = post.id;
+			var title = post.title;
+			var description = post.description;
+			fs.rename(`data/${id}`, `data/${title}`, (err) => {
+
+			});
+			console.log(post);
+
+			// fs.writeFile(`Data/${title}`, description, 'utf8', (err) => {
+			// 	response.writeHead(302, {
+			// 		Location: `/?id=${title}`
+			// 	});
+			// 	response.end();
+			// });
+		});
 	} else {
 		response.writeHead(404);
 		response.end('Not Found');
