@@ -2,39 +2,8 @@ var http = require('http');
 var fs = require('fs');
 var url = require('url');
 var qs = require('querystring');
+var template = require('./lib/template.js');
 
-function templateHTML(title, list, body, control) {
-	return `<!doctype html>
-		<html>
-		<head>
-			<title>WEB2! - ${title}</title>
-			<meta charset="utf-8">
-			<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
-		</head>
-		
-		<body>
-			<h1><a href="/">WEB2</a></h1>
-			${list}
-			${control}
-			${body}		
-		</body>
-		
-		</html>
-		
-		`;
-}
-
-function templateList(filelist) {
-	var list = '<ul>';
-	var i = 0;
-	while (i < filelist.length) {
-		list =
-			list + `<li><a href="/?id=${filelist[i]}">${filelist[i]}</a></li>`;
-		i = i + 1;
-	}
-	list = list + '</ul>';
-	return list;
-}
 
 var app = http.createServer(function (request, response) {
 	var _url = request.url;
@@ -47,6 +16,7 @@ var app = http.createServer(function (request, response) {
 			fs.readdir('./data', function (error, filelist) {
 				title = 'Welcome!';
 				description = 'Hello Node js!';
+				/*
 				var list = templateList(filelist);
 				var template = templateHTML(
 					title,
@@ -58,15 +28,29 @@ var app = http.createServer(function (request, response) {
 				);
 				response.writeHead(200);
 				response.end(template);
+			});*/
+
+				var list = template.list(filelist);
+				var html = template.html(
+					title,
+					list,
+					`<h2>${title}</h2>
+				<p> 
+				${description}
+				</p>`, `<a href="/create">Create</a>`
+				);
+				response.writeHead(200);
+				response.end(html);
 			});
+
 		} else {
 			fs.readdir('./data', function (error, filelist) {
-				var list = templateList(filelist);
+				var list = template.list(filelist);
 				fs.readFile(`data/${title}`, 'utf8', function (
 					err,
 					description
 				) {
-					var template = templateHTML(
+					var html = template.html(
 						title, list, `<h2>${title}</h2>
 						<p> 
 						${description}
@@ -77,7 +61,7 @@ var app = http.createServer(function (request, response) {
 						</form>`
 					);
 					response.writeHead(200);
-					response.end(template);
+					response.end(html);
 				});
 			});
 		}
@@ -85,12 +69,11 @@ var app = http.createServer(function (request, response) {
 		fs.readdir('./data', function (error, filelist) {
 			title = 'Welcome!';
 			description = 'Hello Node js!';
-			var list = templateList(filelist);
-			var template = templateHTML(
+			var list = template.list(filelist);
+			var html = template.html(
 				title,
 				list,
 				`<form action="/create_process" method="POST">
-
 				<p><input type="text" name="title" placeholder="Title"></p>
 				<p>
 					<textarea name="description" placeholder="Description"></textarea>
@@ -98,11 +81,10 @@ var app = http.createServer(function (request, response) {
 				<p>
 					<input type="submit">
 				</p>
-			
 			</form>`, ``
 			);
 			response.writeHead(200);
-			response.end(template);
+			response.end(html);
 		});
 	} else if (pathName === '/create_process') {
 		var body = '';
@@ -122,12 +104,12 @@ var app = http.createServer(function (request, response) {
 		});
 	} else if (pathName === '/update') {
 		fs.readdir('./data', function (error, filelist) {
-			var list = templateList(filelist);
+			var list = template.list(filelist);
 			fs.readFile(`data/${title}`, 'utf8', function (
 				err,
 				description
 			) {
-				var template = templateHTML(
+				var html = template.html(
 					title, list, `<h2>${title}</h2>
 					<p> 
 					<form action="/update_process" method="POST">
@@ -144,7 +126,7 @@ var app = http.createServer(function (request, response) {
 					</p>`, `<a href="/create">Create</a> <a href="/update?id=${title}">Update</a>`
 				);
 				response.writeHead(200);
-				response.end(template);
+				response.end(html);
 			});
 		});
 	} else if (pathName === '/update_process') {
